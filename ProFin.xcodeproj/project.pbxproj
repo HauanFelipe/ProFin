@@ -6,8 +6,19 @@
 	objectVersion = 110;
 	objects = {
 
+/* Begin PBXContainerItemProxy section */
+		A10000000000000000000001 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 2D698D1F306DE39F00A01EC5 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 2D698D26306DE39F00A01EC5;
+			remoteInfo = ProFin;
+		};
+/* End PBXContainerItemProxy section */
+
 /* Begin PBXFileReference section */
 		2D698D27306DE39F00A01EC5 /* ProFin.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ProFin.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		A10000000000000000000002 /* ProFinTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; path = ProFinTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -16,10 +27,20 @@
 			path = ProFin;
 			sourceTree = "<group>";
 		};
+		A10000000000000000000003 /* ProFinTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = ProFinTests;
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
 		2D698D24306DE39F00A01EC5 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			files = (
+			);
+		};
+		A10000000000000000000004 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			files = (
 			);
@@ -31,6 +52,7 @@
 			isa = PBXGroup;
 			children = (
 				2D698D29306DE39F00A01EC5 /* ProFin */,
+				A10000000000000000000003 /* ProFinTests */,
 				2D698D28306DE39F00A01EC5 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -39,6 +61,7 @@
 			isa = PBXGroup;
 			children = (
 				2D698D27306DE39F00A01EC5 /* ProFin.app */,
+				A10000000000000000000002 /* ProFinTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -64,6 +87,27 @@
 			productReference = 2D698D27306DE39F00A01EC5 /* ProFin.app */;
 			productType = "com.apple.product-type.application";
 		};
+		A10000000000000000000005 /* ProFinTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A1000000000000000000000A /* Build configuration list for PBXNativeTarget "ProFinTests" */;
+			buildPhases = (
+				A10000000000000000000006 /* Sources */,
+				A10000000000000000000004 /* Frameworks */,
+				A10000000000000000000007 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				A10000000000000000000008 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				A10000000000000000000003 /* ProFinTests */,
+			);
+			name = ProFinTests;
+			productName = ProFinTests;
+			productReference = A10000000000000000000002 /* ProFinTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -76,6 +120,10 @@
 				TargetAttributes = {
 					2D698D26306DE39F00A01EC5 = {
 						CreatedOnToolsVersion = 27.0;
+					};
+					A10000000000000000000005 = {
+						CreatedOnToolsVersion = 27.0;
+						TestTargetID = 2D698D26306DE39F00A01EC5;
 					};
 				};
 			};
@@ -94,12 +142,18 @@
 			projectRoot = "";
 			targets = (
 				2D698D26306DE39F00A01EC5 /* ProFin */,
+				A10000000000000000000005 /* ProFinTests */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
 		2D698D25306DE39F00A01EC5 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			files = (
+			);
+		};
+		A10000000000000000000007 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			files = (
 			);
@@ -112,7 +166,20 @@
 			files = (
 			);
 		};
+		A10000000000000000000006 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			files = (
+			);
+		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		A10000000000000000000008 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 2D698D26306DE39F00A01EC5 /* ProFin */;
+			targetProxy = A10000000000000000000001 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		2D698D32306DE39F00A01EC5 /* Debug configuration for PBXProject "ProFin" */ = {
@@ -296,6 +363,34 @@
 			};
 			name = Release;
 		};
+		A1000000000000000000000B /* Debug configuration for PBXNativeTarget "ProFinTests" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				GENERATE_INFOPLIST_FILE = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = com.hauanfelipe.ProFinTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/ProFin.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/ProFin";
+			};
+			name = Debug;
+		};
+		A1000000000000000000000C /* Release configuration for PBXNativeTarget "ProFinTests" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				GENERATE_INFOPLIST_FILE = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = com.hauanfelipe.ProFinTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/ProFin.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/ProFin";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -312,6 +407,14 @@
 			buildConfigurations = (
 				2D698D35306DE39F00A01EC5 /* Debug configuration for PBXNativeTarget "ProFin" */,
 				2D698D36306DE39F00A01EC5 /* Release configuration for PBXNativeTarget "ProFin" */,
+			);
+			defaultConfigurationName = Release;
+		};
+		A1000000000000000000000A /* Build configuration list for PBXNativeTarget "ProFinTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A1000000000000000000000B /* Debug configuration for PBXNativeTarget "ProFinTests" */,
+				A1000000000000000000000C /* Release configuration for PBXNativeTarget "ProFinTests" */,
 			);
 			defaultConfigurationName = Release;
 		};
