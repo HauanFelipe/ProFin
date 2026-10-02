@@ -22,7 +22,7 @@ enum AppData {
     static let initialAccountID = UUID(uuidString: "2389AC68-4C4D-49FB-8F14-C57A373A8926")!
 
     static func makeContainer(at url: URL? = nil, inMemory: Bool = false) throws -> ModelContainer {
-        let schema = Schema(versionedSchema: ProFinSchemaV3.self)
+        let schema = Schema(versionedSchema: ProFinSchemaV6.self)
         // O banco do ProFin fica separado do banco de exemplo criado pelo Xcode.
         let configuration: ModelConfiguration
         if let url {
@@ -39,6 +39,7 @@ enum AppData {
         // Executado antes de disponibilizar o contexto às telas. Pode ser retomado
         // caso o app tenha sido interrompido após migrar a estrutura do banco.
         try assignInitialAccount(in: container.mainContext)
+        try normalizeAccountKinds(in: container.mainContext)
         try seedCategories(in: container.mainContext)
         try RecurringExpenseOperations.generateDueOccurrences(in: container.mainContext)
         return container
@@ -55,7 +56,8 @@ enum AppData {
         if let existing = accounts.first(where: { $0.id == initialAccountID }) {
             account = existing
         } else {
-            account = FinancialAccount(id: initialAccountID, name: "Conta inicial")
+            account = FinancialAccount(id: initialAccountID, name: "Conta Principal", kind: .checking,
+                                       createdAt: unassigned.isEmpty ? Date() : nil)
             context.insert(account)
         }
         for transaction in unassigned {
@@ -88,5 +90,14 @@ enum AppData {
             context.rollback()
             throw error
         }
+    }
+
+    // Retomável: converte somente o tipo antigo, sem alterar nomes, IDs ou valores.
+    static func normalizeAccountKinds(in context: ModelContext) throws {
+        let accounts = try context.fetch(FetchDescriptor<FinancialAccount>())
+        for account in accounts where account.kindRawValue == "turboBox" {
+            account.kind = .savingsBox
+        }
+        if context.hasChanges { try FinancialOperations.save(in: context) }
     }
 }

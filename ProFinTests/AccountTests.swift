@@ -9,7 +9,7 @@ struct AccountTests {
 
     private func makeAccounts(in context: ModelContext) throws -> (FinancialAccount, FinancialAccount) {
         let checking = FinancialAccount(name: "Conta corrente", kind: .checking, openingBalanceInCents: 200_000)
-        let turbo = FinancialAccount(name: "Caixinha Turbo", kind: .turboBox, openingBalanceInCents: 100_000)
+        let turbo = FinancialAccount(name: "Caixinha Turbo", kind: .savingsBox, openingBalanceInCents: 100_000)
         context.insert(checking)
         context.insert(turbo)
         try context.save()
@@ -65,10 +65,10 @@ struct AccountTests {
 
         #expect(try FinancialSummary.balance(of: initial) == nil)
         #expect(try FinancialSummary.netWorth(accounts: [initial, checking, turbo]) == nil)
-        #expect(try FinancialSummary.netWorth(accounts: [checking, turbo]) == 300_000)
+        #expect(try FinancialSummary.netWorth(accounts: [checking, turbo]) == 200_000)
         initial.openingBalanceInCents = 0
         #expect(try FinancialSummary.balance(of: initial) == 0)
-        #expect(try FinancialSummary.netWorth(accounts: [initial, checking, turbo]) == 300_000)
+        #expect(try FinancialSummary.netWorth(accounts: [initial, checking, turbo]) == 200_000)
     }
 
     @Test

@@ -1,9 +1,9 @@
 import Foundation
 import SwiftData
 
-typealias AccountTransfer = ProFinSchemaV3.AccountTransfer
+typealias AccountTransfer = ProFinSchemaV6.AccountTransfer
 
-extension ProFinSchemaV3 {
+extension ProFinSchemaV6 {
     @Model
     final class AccountTransfer {
         @Attribute(.unique) var id: UUID

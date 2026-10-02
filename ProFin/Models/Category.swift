@@ -1,9 +1,9 @@
 import Foundation
 import SwiftData
 
-typealias Category = ProFinSchemaV3.Category
+typealias Category = ProFinSchemaV6.Category
 
-extension ProFinSchemaV3 {
+extension ProFinSchemaV6 {
     @Model
     final class Category {
         // Mantém os UUIDs existentes sem o índice incompatível com

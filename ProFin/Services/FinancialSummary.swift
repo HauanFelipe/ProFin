@@ -19,14 +19,44 @@ enum FinancialSummary {
         return try cents(total)
     }
 
-    // Recebe todas as contas, inclusive arquivadas. Não soma apenas as ativas.
+    // O patrimônio exibido inclui apenas contas ativas; o histórico permanece intacto.
     static func netWorth(accounts: [FinancialAccount], asOf date: Date = Date()) throws -> Int64? {
         var total = Decimal.zero
-        for account in accounts {
+        for account in accounts where account.isActive {
             guard let balance = balanceInDecimal(of: account, asOf: date) else { return nil }
             total += balance
         }
         return try cents(total)
+    }
+
+    // Dinheiro fora das caixinhas, incluindo contas antigas do tipo "outro".
+    static func availableMoney(accounts: [FinancialAccount], asOf date: Date = Date()) throws -> Int64? {
+        try netWorth(accounts: accounts.filter { $0.kind != .savingsBox }, asOf: date)
+    }
+
+    // Converte o saldo atual informado para a base já usada pelo histórico.
+    // Não cria receita/despesa e não soma novamente lançamentos existentes.
+    static func openingBalance(forCurrentBalance current: Int64, of account: FinancialAccount,
+                               asOf date: Date = Date()) throws -> Int64 {
+        try cents(Decimal(current) - movementsInDecimal(of: account, asOf: date))
+    }
+
+    // Limita uma transferência retroativa pelo menor saldo entre sua data e hoje.
+    // Movimentos no mesmo instante são agrupados, sem depender da ordem do fetch.
+    static func transferableBalance(
+        of account: FinancialAccount, on date: Date, now: Date = Date()
+    ) throws -> Int64? {
+        guard var balance = balanceInDecimal(of: account, asOf: date) else { return nil }
+        var minimum = balance
+        var changes: [Date: Decimal] = [:]
+        for entry in AccountHistory.entries(for: account, asOf: now) where entry.date > date {
+            changes[entry.date, default: .zero] += entry.isIncoming ? Decimal(entry.amountInCents) : -Decimal(entry.amountInCents)
+        }
+        for date in changes.keys.sorted() {
+            balance += changes[date] ?? .zero
+            minimum = min(minimum, balance)
+        }
+        return try cents(minimum)
     }
 
     static func monthlySummary(
@@ -53,7 +83,11 @@ enum FinancialSummary {
 
     private static func balanceInDecimal(of account: FinancialAccount, asOf date: Date) -> Decimal? {
         guard let openingBalance = account.openingBalanceInCents else { return nil }
-        var total = Decimal(openingBalance)
+        return Decimal(openingBalance) + movementsInDecimal(of: account, asOf: date)
+    }
+
+    private static func movementsInDecimal(of account: FinancialAccount, asOf date: Date) -> Decimal {
+        var total = Decimal.zero
         for transaction in account.transactions where transaction.date <= date {
             switch transaction.type {
             case .income: total += Decimal(transaction.amountInCents)

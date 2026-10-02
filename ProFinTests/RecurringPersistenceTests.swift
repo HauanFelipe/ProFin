@@ -130,7 +130,7 @@ struct RecurringPersistenceTests {
                                                      startMonth: Date(), in: context)
             }
             do {
-                let schema = Schema(versionedSchema: ProFinSchemaV3.self)
+                let schema = Schema(versionedSchema: ProFinSchemaV6.self)
                 let config = ModelConfiguration("ProFin", schema: schema, url: url, allowsSave: false, cloudKitDatabase: .none)
                 let container = try ModelContainer(for: schema, configurations: [config])
                 for _ in 0..<2 {

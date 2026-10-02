@@ -1,9 +1,9 @@
 import Foundation
 import SwiftData
 
-typealias RecurringExpenseOccurrence = ProFinSchemaV3.RecurringExpenseOccurrence
+typealias RecurringExpenseOccurrence = ProFinSchemaV6.RecurringExpenseOccurrence
 
-extension ProFinSchemaV3 {
+extension ProFinSchemaV6 {
     @Model
     final class RecurringExpenseOccurrence {
         var id: UUID

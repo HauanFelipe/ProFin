@@ -59,8 +59,8 @@ struct MigrationTests {
             #expect(categories.count == 1)
             let account = try #require(accounts.first)
             #expect(account.id == AppData.initialAccountID)
-            #expect(account.name == "Conta inicial")
-            #expect(account.kind == .other)
+            #expect(account.name == "Conta Principal")
+            #expect(account.kind == .checking)
             #expect(account.openingBalanceInCents == nil)
             #expect(account.transactions.count == 2)
             #expect(try FinancialSummary.netWorth(accounts: accounts) == nil)
@@ -144,7 +144,7 @@ struct MigrationTests {
         do {
             // Um store somente leitura provoca falha real de gravação sem
             // invalidar previamente os vínculos de outros registros.
-            let schema = Schema(versionedSchema: ProFinSchemaV3.self)
+            let schema = Schema(versionedSchema: ProFinSchemaV6.self)
             let configuration = ModelConfiguration(
                 "ProFin", schema: schema, url: url, allowsSave: false, cloudKitDatabase: .none
             )
@@ -197,6 +197,7 @@ struct MigrationTests {
         let container = try AppData.makeContainer(at: url)
         let context = container.mainContext
         let source = try #require(context.fetch(FetchDescriptor<FinancialAccount>()).first)
+        source.openingBalanceInCents = 100
         let destination = FinancialAccount(name: "Destino", openingBalanceInCents: 0)
         context.insert(destination)
         try context.save()
@@ -224,7 +225,7 @@ struct MigrationTests {
             let checking = try #require(context.fetch(FetchDescriptor<FinancialAccount>()).first)
             checking.kind = .checking
             checking.openingBalanceInCents = 200_000
-            let turbo = FinancialAccount(name: "Turbo", kind: .turboBox, openingBalanceInCents: 100_000)
+            let turbo = FinancialAccount(name: "Turbo", kind: .savingsBox, openingBalanceInCents: 100_000)
             context.insert(turbo)
             try context.save()
             let transfer = try FinancialOperations.transfer(
@@ -240,7 +241,7 @@ struct MigrationTests {
             #expect(transfer.id == transferID)
             #expect(transfer.notes == "Reserva")
             #expect(transfer.sourceAccount.kind == .checking)
-            #expect(transfer.destinationAccount.kind == .turboBox)
+            #expect(transfer.destinationAccount.kind == .savingsBox)
             #expect(transfer.sourceAccount.outgoingTransfers.count == 1)
             #expect(transfer.destinationAccount.incomingTransfers.count == 1)
             #expect(try FinancialSummary.balance(of: transfer.sourceAccount) == 170_000)

@@ -141,6 +141,13 @@ enum FinancialOperations {
         try validate(account: source, in: context)
         try validate(account: destination, in: context)
 
+        guard let available = try FinancialSummary.transferableBalance(of: source, on: date) else {
+            throw AccountOperationError.unknownBalance
+        }
+        guard amountInCents <= available else {
+            throw AccountOperationError.insufficientBalance(available: available)
+        }
+
         let transfer = AccountTransfer(
             amountInCents: amountInCents, date: date,
             sourceAccount: source, destinationAccount: destination, notes: normalized(notes)
@@ -152,6 +159,7 @@ enum FinancialOperations {
 
     static func deleteAccount(_ account: FinancialAccount, in context: ModelContext) throws {
         guard account.modelContext === context else { throw FinancialOperationError.differentContext }
+        try GoalOperations.requireNoActiveGoal(for: account, in: context)
         guard account.transactions.isEmpty,
               account.outgoingTransfers.isEmpty,
               account.incomingTransfers.isEmpty else {
@@ -159,6 +167,14 @@ enum FinancialOperations {
         }
         guard account.openingBalanceInCents == nil || account.openingBalanceInCents == 0 else {
             throw FinancialOperationError.accountHasBalance
+        }
+        let accountID = account.id
+        for configuration in try context.fetch(FetchDescriptor<SavingsYieldConfiguration>(
+            predicate: #Predicate { $0.accountID == accountID }
+        )) { context.delete(configuration) }
+        // Metas arquivadas permanecem cadastradas, mesmo após excluir uma conta vazia.
+        for goal in try context.fetch(FetchDescriptor<Goal>()) where goal.savingsAccount?.id == accountID {
+            goal.savingsAccount = nil
         }
         context.delete(account)
         try save(in: context)
