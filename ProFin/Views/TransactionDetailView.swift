@@ -38,6 +38,7 @@ struct TransactionDetailView: View {
             }
         }
         .navigationTitle("Detalhes")
+        .proFinScreen()
         .navigationBarTitleDisplayMode(.inline)
     }
 }

@@ -6,7 +6,7 @@ import Testing
 @MainActor
 struct PersistenceTests {
     private func makeContainer(at url: URL? = nil) throws -> ModelContainer {
-        let schema = Schema(versionedSchema: ProFinSchemaV6.self)
+        let schema = Schema(versionedSchema: ProFinSchemaV9.self)
         let configuration: ModelConfiguration
         if let url {
             configuration = ModelConfiguration(schema: schema, url: url, cloudKitDatabase: .none)

@@ -1,9 +1,9 @@
 import Foundation
 import SwiftData
 
-typealias Goal = ProFinSchemaV6.Goal
+typealias Goal = ProFinSchemaV9.Goal
 
-extension ProFinSchemaV6 {
+extension ProFinSchemaV9 {
 @Model
 final class Goal {
     var id: UUID

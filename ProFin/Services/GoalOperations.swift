@@ -2,15 +2,17 @@ import Foundation
 import SwiftData
 
 enum GoalOperationError: LocalizedError, Equatable {
+    case protectedReserve
     case invalidName, invalidTarget, invalidAccount, accountAlreadyLinked, accountHasActiveGoal
 
     var errorDescription: String? {
         switch self {
+        case .protectedReserve: "Uma reserva de emergência não pode financiar uma meta de compra."
         case .invalidName: "Informe o nome da meta."
         case .invalidTarget: "O valor da meta precisa ser maior que zero."
         case .invalidAccount: "Escolha uma caixinha ativa ou deixe a meta sem vínculo."
         case .accountAlreadyLinked: "Esta caixinha já está vinculada a outra meta ativa. Escolha outra caixinha ou arquive a meta anterior."
-        case .accountHasActiveGoal: "Esta caixinha está vinculada a uma meta ativa. Desvincule ou arquive a meta antes de desativar, excluir ou mudar o tipo da conta."
+        case .accountHasActiveGoal: "Esta caixinha está vinculada a uma meta ativa. Desvincule ou arquive a meta antes de proteger, desativar, excluir ou mudar o tipo da conta."
         }
     }
 }
@@ -73,6 +75,7 @@ enum GoalOperations {
                                  in context: ModelContext) throws {
         guard let account else { return }
         guard account.modelContext === context else { throw FinancialOperationError.differentContext }
+        guard !account.isEmergencyReserve else { throw GoalOperationError.protectedReserve }
         guard account.isActive, account.kind == .savingsBox else { throw GoalOperationError.invalidAccount }
         if reserve {
             let goals = try context.fetch(FetchDescriptor<Goal>(predicate: #Predicate { !$0.isArchived }))

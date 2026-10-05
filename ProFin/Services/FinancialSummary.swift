@@ -62,6 +62,8 @@ enum FinancialSummary {
     static func monthlySummary(
         transactions: [FinancialTransaction],
         monthContaining date: Date,
+        installments: [CardInstallment] = [],
+        refunds: [CardRefund] = [],
         calendar: Calendar = .current
     ) throws -> MonthlySummary {
         guard let month = calendar.dateInterval(of: .month, for: date) else {
@@ -75,6 +77,14 @@ enum FinancialSummary {
             case .income: income += Decimal(transaction.amountInCents)
             case .expense: expense += Decimal(transaction.amountInCents)
             }
+        }
+        for installment in installments where installment.invoice.referenceMonth >= month.start
+            && installment.invoice.referenceMonth < month.end && installment.purchase.date <= Date() {
+            expense += Decimal(installment.amountInCents)
+        }
+        for refund in refunds where refund.invoice.referenceMonth >= month.start
+            && refund.invoice.referenceMonth < month.end && refund.date <= Date() {
+            expense -= Decimal(refund.amountInCents)
         }
         return try MonthlySummary(
             incomeInCents: cents(income), expenseInCents: cents(expense), resultInCents: cents(income - expense)
@@ -99,6 +109,9 @@ enum FinancialSummary {
         }
         for transfer in account.outgoingTransfers where transfer.date <= date {
             total -= Decimal(transfer.amountInCents)
+        }
+        for payment in account.cardPayments where payment.date <= date {
+            total -= Decimal(payment.amountInCents)
         }
         return total
     }

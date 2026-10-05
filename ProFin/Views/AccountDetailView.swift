@@ -19,6 +19,7 @@ struct AccountDetailView: View {
                 List {
                     Section("Saldo atual") {
                         AccountBalanceText(account: account).font(.title.bold())
+                        if account.isEmergencyReserve { Label("Reserva de emergência protegida", systemImage: "shield") }
                         LabeledContent("Tipo", value: account.kind.title)
                         LabeledContent("Situação", value: account.isActive ? "Ativa" : "Inativa")
                         if let createdAt = account.createdAt {
@@ -66,6 +67,7 @@ struct AccountDetailView: View {
                     }
                 }
                 .navigationTitle(account.name)
+                .proFinScreen()
                 .toolbar { Button("Editar") { showingEdit = true } }
             } else {
                 ContentUnavailableView("Conta não encontrada", systemImage: "questionmark.folder")

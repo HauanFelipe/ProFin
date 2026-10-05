@@ -17,7 +17,7 @@ struct GoalFormView: View {
     private var availableAccounts: [FinancialAccount] {
         accounts.filter { account in
             if account.id == goal?.savingsAccount?.id { return true }
-            guard account.isActive, account.kind == .savingsBox else { return false }
+            guard account.isActive, !account.isEmergencyReserve, account.kind == .savingsBox else { return false }
             return goal?.isArchived == true || !goals.contains { !$0.isArchived && $0.id != goalID && $0.savingsAccount?.id == account.id }
         }
     }
@@ -45,6 +45,7 @@ struct GoalFormView: View {
                 }
             }
             .navigationTitle(goalID == nil ? "Nova meta" : "Editar meta")
+            .proFinScreen()
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button("Cancelar") { dismiss() } }

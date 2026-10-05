@@ -11,7 +11,8 @@ enum SavingsYieldOperations {
         let transfers = (account.incomingTransfers + account.outgoingTransfers).map {
             "x/\($0.id)/\($0.date.timeIntervalSince1970)/\($0.amountInCents)/\($0.sourceAccount.id)/\($0.destinationAccount.id)"
         }
-        return ([account.openingBalanceInCents.map(String.init) ?? "unknown"] + (transactions + transfers).sorted()).joined(separator: "|")
+        let payments = account.cardPayments.map { "p/\($0.id)/\($0.amountInCents)/\($0.date.timeIntervalSince1970)" }
+        return ([account.openingBalanceInCents.map(String.init) ?? "unknown"] + (transactions + transfers + payments).sorted()).joined(separator: "|")
     }
 
     static func save(account: FinancialAccount, lots: [SavingsYieldLotInput], annualCDIBasisPoints: Int,

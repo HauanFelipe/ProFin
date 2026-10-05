@@ -1,9 +1,9 @@
 import Foundation
 import SwiftData
 
-typealias Category = ProFinSchemaV6.Category
+typealias Category = ProFinSchemaV9.Category
 
-extension ProFinSchemaV6 {
+extension ProFinSchemaV9 {
     @Model
     final class Category {
         // Mantém os UUIDs existentes sem o índice incompatível com
@@ -20,6 +20,9 @@ extension ProFinSchemaV6 {
 
         @Relationship(deleteRule: .deny, inverse: \RecurringExpenseOccurrence.category)
         var recurringOccurrences: [RecurringExpenseOccurrence] = []
+
+        @Relationship(deleteRule: .deny, inverse: \CardPurchase.category)
+        var cardPurchases: [CardPurchase] = []
 
         init(name: String) {
             self.id = UUID()

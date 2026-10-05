@@ -37,6 +37,11 @@ enum AccountHistory {
                 isIncoming: false, notes: transfer.notes, transactionID: nil, transferID: transfer.id
             ))
         }
+        for payment in account.cardPayments where payment.date <= date {
+            entries.append(AccountHistoryEntry(id: "card-payment/\(payment.id)", date: payment.date,
+                title: "Pagamento de fatura", detail: payment.invoice.card.name,
+                amountInCents: payment.amountInCents, isIncoming: false, notes: nil, transactionID: nil, transferID: nil))
+        }
         return entries.sorted { $0.date == $1.date ? $0.id < $1.id : $0.date > $1.date }
     }
 }

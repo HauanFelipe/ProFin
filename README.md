@@ -35,7 +35,7 @@ recorrência gera apenas previsões; uma despesa só é criada ao registrar um p
 
 - `ProFin/App`: entrada do app, configuração do banco e categorias iniciais.
 - `ProFin/Models`: categoria, conta, receita/despesa, transferência e seus tipos.
-- `ProFin/Persistence`: schemas V1/V2/V3/V4/V5/V6 e plano de migração do SwiftData.
+- `ProFin/Persistence`: schemas V1/V2/V3/V4/V5/V6/V7 e plano de migração do SwiftData.
 - `ProFin/Services`: validação/gravação de operações e cálculos financeiros.
 - `ProFin/Views`: lista, formulário e detalhes.
 - `ProFin/Components`: apresentação de uma movimentação na lista.
@@ -357,8 +357,7 @@ relacionamentos do SwiftData altere os schemas antigos durante uma migração. A
 nem altera saldos. Os testes cobrem progresso, transferências, excedentes, saldo
 negativo/desconhecido, vínculo exclusivo, edição, arquivamento, reativação,
 proteção de contas vinculadas, exclusão sem perda financeira e migração/reabertura.
-A divisão manual de uma conta entre várias metas e a análise de compra ficam
-para etapas posteriores.
+A divisão manual de uma conta entre várias metas fica para uma etapa posterior.
 
 
 Se a origem estiver sem valor definido, a transferência oferece **Informar dinheiro
@@ -380,3 +379,278 @@ são preservadas; alterar essa base também recalcula consultas históricas de s
 O saldo inicial é um detalhe interno de compatibilidade e não é mais solicitado
 ou exibido ao usuário. Para entradas e saídas novas, registre a movimentação ou
 transferência correspondente; editar o valor serve para corrigir o saldo informado.
+
+
+## Análise de compra e reserva de emergência
+
+Em **Metas → sua meta → Analisar compra**, simule uma compra à vista hoje.
+O preço começa com o valor da meta e pode ser alterado apenas na simulação.
+Informe gastos previstos adicionais, margem a manter e custos como frete ou
+descontos no resgate. Use zero quando não houver esses valores.
+
+```text
+sobra = dinheiro nas contas ativas fora das caixinhas
+      + saldo da caixinha ativa vinculada à meta
+      − contas pendentes com vencimento até o fim do mês (incluindo atrasadas)
+      − gastos previstos adicionais − margem − custos − compra
+```
+
+`PurchaseAnalysisService` concentra o cálculo e produz `PurchaseAnalysis`, sem
+persistir saldos ou recomendações. O resultado informa quanto falta, se há cobertura
+exata ou quanto sobra além da margem. A análise fica incompleta quando uma conta
+incluída não tem saldo informado ou uma cobrança pendente não tem estimativa.
+Caixinhas não utilizadas na análise podem ter saldo desconhecido sem bloquear o
+cálculo. Valores negativos de saldo são considerados, não escondidos.
+
+Ao abrir a tela e ao retornar ao app, as ocorrências recorrentes são atualizadas;
+se a atualização falhar, o resultado fica indisponível até uma nova tentativa.
+Cobranças pagas não são descontadas novamente. Contas de meses anteriores ainda
+pendentes entram no cálculo mesmo que a recorrência tenha sido desativada.
+Compromissos após o fim do mês ficam fora desse horizonte. A lista mostra quais
+cobranças foram descontadas. Gastos extras devem excluir os já listados.
+
+O resultado mensal é apenas contexto: receitas e despesas realizadas já afetam o
+saldo. Receitas futuras, projeções de rendimento e caixinhas de outras metas não
+são somadas. A simulação não cria compras, despesas, pagamentos ou transferências.
+Os campos da simulação não são persistidos ao sair da tela.
+
+Em **Caixinhas → sua caixinha → Editar**, ative **Proteger como reserva de emergência**.
+A proteção é exclusiva de caixinhas. Ela impede vincular a caixinha a uma meta de
+compra ou reativar uma meta antiga ainda vinculada. Se houver uma meta ativa,
+primeiro desvincule ou arquive a meta. Transferências continuam permitidas: a
+proteção é uma regra de planejamento, não um bloqueio bancário. Para mudar o tipo
+da conta, remova a proteção explicitamente.
+
+A V7 acrescenta `FinancialAccount.isEmergencyReserve`, inicialmente falso para
+contas existentes. O retrato V6 foi congelado antes da alteração. Nenhuma conta é
+marcada automaticamente, e os vínculos/saldos antigos são preservados na migração.
+Os testes cobrem pendências antigas e futuras, pagamentos sem dupla contagem,
+exclusão de outras caixinhas/reservas, valores desconhecidos, limites de cobertura,
+custos, transferências, proteção e migração/reabertura.
+
+## Cartões e Plano do mês
+
+Acesse **Movimentações → Cartões** (também disponível no Dashboard). Cadastre
+nome, limite, fechamento e vencimento. Compras permitem categoria, classificação,
+valor total e de 1 a 120 parcelas. Os centavos restantes são distribuídos nas
+primeiras parcelas, preservando exatamente o total. O limite disponível é uma
+estimativa local; não há consulta ao banco nem bloqueio pelo limite cadastrado.
+
+A fatura sugerida considera compras no dia do fechamento na próxima fatura.
+É possível escolher a primeira fatura manualmente para conferir com o banco.
+Dias inexistentes são ajustados ao último dia do mês. Alterar as datas do cartão
+não modifica as faturas já registradas.
+
+- A compra cria parcelas e dívida, sem tirar dinheiro da conta.
+- Cada parcela entra nos gastos do mês de vencimento da fatura.
+- Pagar a fatura reduz o saldo da conta e a dívida, sem criar outra despesa.
+- O patrimônio líquido do Dashboard desconta toda a dívida, inclusive parcelas futuras.
+- Uma cobrança recorrente pode ser vinculada à compra: fica **No cartão** e sua
+  pendência passa a ser representada pelas faturas, sem duplicação.
+
+Nesta etapa, pagamentos são integrais e permitidos a partir do fechamento.
+Não há pagamento parcial, rotativo ou parcelamento da fatura. Estornos estão descritos na etapa de melhorias do cartão abaixo. Compras
+sem parcelas pagas podem ser excluídas e cadastradas novamente para correção.
+O histórico da conta inclui os pagamentos de faturas.
+
+Em **Dashboard → Plano do mês**, configure gastos extras ainda previstos e a
+margem que deseja manter. Depois adicione caixinhas/metas com um valor mensal
+desejado e prioridade (menor número primeiro). A fórmula compartilhada com a
+análise de compra considera:
+
+`dinheiro livre = saldo fora das caixinhas − recorrências pendentes − faturas pendentes − extras − margem`
+
+Entram pendências vencidas e com vencimento até o fim do mês. Parcelas futuras
+aparecem na dívida, mas não nessa reserva mensal. Receitas futuras e rendimentos
+estimados não são dinheiro disponível. Informações necessárias desconhecidas
+bloqueiam as sugestões, em vez de serem tratadas como zero.
+
+O plano distribui o dinheiro livre por prioridade, descontando aportes já feitos
+no mês e limitando metas ao valor que falta. A meta e sua caixinha são um único
+destino. Aportes de contas que não são caixinhas contam como contribuições;
+transferências entre caixinhas não contam. Retiradas não renovam a intenção
+mensal. Os destinos permanecem para os meses seguintes; extras e margem precisam
+ser confirmados a cada mês. Ao efetivar um gasto extra, atualize sua estimativa
+para não reservar duas vezes o mesmo valor.
+
+**Registrar transferência** abre o formulário com destino e valor sugeridos.
+Registre apenas transferências feitas no banco; o aplicativo não movimenta
+seu dinheiro. Tudo continua local, sem APIs, autenticação ou serviços externos.
+
+A versão V8 do SwiftData acrescenta cartão, compra, parcela, fatura, pagamento,
+configuração mensal e regra de aporte. O retrato V7 foi congelado, mantendo a
+migração dos dados existentes. Saldos continuam derivados do histórico. Os testes
+cobrem parcelamento, centavos, fechamento, pagamento único, vínculo recorrente,
+prioridades, aportes, limite das metas, dinheiro insuficiente, mudança de mês,
+persistência e migração V7 → V8.
+
+## Análise de gastos
+
+A aba **Relatórios** mostra total, participação percentual e quantidade de
+lançamentos por categoria, ordenados pelo maior gasto. As barras representam a
+participação no total do mês. Categorias com gastos apenas no mês anterior
+continuam na comparação, com valor atual zero.
+
+A análise soma despesas das contas e parcelas no mês da fatura. Receitas,
+transferências e pagamentos de faturas não entram novamente. Cada parcela conta
+como um lançamento, não como uma nova compra pelo valor total. A classificação
+é a informada pelo usuário; registros antigos sem classificação aparecem
+separadamente, sem suposições automáticas.
+
+A comparação usa o mês anterior completo, inclusive na virada do ano. Para o
+mês atual, a interface avisa que ele está em andamento. Variações percentuais
+não são calculadas quando o valor anterior é zero. Os destaques mostram a maior
+categoria, o maior aumento em reais e o total classificado como não essencial,
+sem identificar gastos como desperdício nem prometer uma economia.
+
+O cálculo está centralizado em `SpendingAnalysis`, sem novos dados persistidos
+ou alteração no banco. Testes verificam parcelas sem dupla contagem, limites dos
+meses, categorias sem gastos atuais, percentuais, classificação ausente, virada
+do ano, ausência de dados e proteção contra estouro de valores.
+
+Cada categoria apresenta uma frase com o total do mês (por exemplo, gastos com
+“Namorada”). Toque nela para abrir a lista das despesas e parcelas que compõem o
+total, com acesso aos registros originais. Categorias pessoais são criadas no
+cadastro do gasto e escolhidas pelo usuário; o app não deduz com quem ele gastou.
+
+## Dashboard: visão do mês
+
+O Dashboard reúne dinheiro nas contas, dinheiro livre segundo o Plano do mês,
+sugestões de aportes, pendências e vencimentos, patrimônio líquido, resumo mensal,
+maior categoria de gasto e até três metas ativas mais recentes.
+
+Dinheiro livre usa `MonthlyPlanService`, incluindo margem e extras configurados
+para o mês. Dados incompletos impedem a exibição de um saldo livre definitivo.
+Mostra até três sugestões positivas em ordem de prioridade; o restante livre
+considera todas as sugestões. Os detalhes continuam disponíveis no Plano do mês.
+
+Os vencimentos usam `PlanningCommitments`: até cinco contas/faturas pendentes
+até o fim do mês, ordenadas pelas mais antigas, incluindo atrasadas. Contas já
+vinculadas ao cartão aparecem pela fatura. Valores sem estimativa são indicados.
+Ao abrir a tela, retornar ao aplicativo ou puxar para atualizar, as ocorrências
+recorrentes são atualizadas. Se isso falhar, o planejamento fica indisponível
+até uma nova tentativa, sem apresentar pendências potencialmente desatualizadas.
+
+Categoria e metas abrem seus detalhes e reutilizam `SpendingAnalysis` e
+`GoalProgressView`. Não há novos Models nem migração de banco nesta etapa.
+
+## Backup e restauração
+
+Abra **Dashboard → Backup e restauração → Salvar backup no app Arquivos**.
+Exporte antes de apagar/reinstalar o aplicativo e sempre que quiser atualizar sua
+cópia de segurança. Salve fora da pasta do ProFin, por exemplo no iCloud Drive
+escolhido no app Arquivos, ou copie para um computador. Arquivos na pasta do app
+podem desaparecer ao desinstalá-lo. O ProFin não envia dados a um servidor.
+
+Depois de instalar, abra a mesma área, escolha o último arquivo JSON exportado,
+confira a data e a quantidade de registros e toque em **Restaurar este backup**.
+A confirmação substitui o histórico atual pelo backup, sem mesclar ou duplicar
+registros. Mudanças posteriores à exportação não estarão no arquivo. A criação
+de backup é manual; o horário exibido é o da última exportação neste aparelho.
+
+O arquivo inclui todos os Models atuais (17 na V9, incluindo estornos): contas, categorias, receitas/despesas,
+transferências, recorrências e cobranças, metas, posições/lotes da simulação de
+rendimento, cartões, compras, parcelas, faturas, pagamentos e Plano do mês.
+Não há senha/criptografia no arquivo; guarde-o em local privado. O JSON contém
+um snapshot SQLite codificado em base64, versão, data, contagens e SHA-256 para
+identificar corrupção acidental. Não é um formato para editar manualmente.
+
+A exportação usa a API de backup do SQLite, incluindo gravações do WAL e tornando
+o snapshot independente de arquivos auxiliares. A importação verifica versão,
+integridade e contagens e abre um banco separado antes de trocar um ponteiro
+local atômico. A interface recarrega o contexto e a próxima inicialização usa o
+banco restaurado. Falhas anteriores à ativação mantêm o banco atual. Bancos
+anteriores não são apagados durante a restauração. O backup não contém esse
+histórico de bancos anteriores, apenas os dados do banco ativo.
+
+A versão atual aceita backups V8 e V9/formato 1; mudanças futuras de schema devem
+manter uma rotina explícita de compatibilidade. Arquivos de versões não aceitas
+são recusados, sem alterar os dados atuais. A seleção limita arquivos a 200 MB.
+Testes cobrem restauração completa, exportação após restaurar, dados recentes no
+WAL, relações, corrupção, versão incompatível, contagens divergentes e ativação
+persistente com preservação do banco ativo em caso de erro.
+
+
+## Melhorias do cartão: correções, estornos e parcelas futuras
+
+Em **Cartões → cartão → fatura**, use **Corrigir pagamento registrado por engano**
+e confirme. Isso exclui somente o registro local, recompõe o saldo calculado da
+conta e reabre a pendência. É possível registrar o pagamento correto em seguida.
+A conta precisa estar ativa. Essa operação não desfaz pagamentos no banco.
+
+Em **Cartões → cartão → compra → Registrar estorno**, informe valor, data do
+crédito e mês de vencimento da fatura onde o banco lançou o crédito. Estornos
+parciais e integrais são permitidos até o valor total da compra. Datas anteriores
+à compra e posteriores a hoje são recusadas. Não há receita nem depósito na
+conta: o crédito reduz a fatura escolhida, e seu excedente abate faturas seguintes
+em ordem cronológica. As parcelas originais permanecem no histórico. Esta etapa
+representa crédito em fatura; devolução diretamente em conta e cancelamento
+individual de parcelas não são operações disponíveis.
+
+Faturas com crédito suficiente ficam sem valor a pagar; as demais são pagas
+integralmente pelo restante após créditos. Alterar compras ou estornos antes de
+uma fatura já paga é bloqueado para não reescrever créditos consumidos. Confira e
+corrija os registros de pagamento afetados antes de corrigir esse histórico.
+Estornos incorretos podem ser removidos com confirmação no detalhe da compra,
+respeitando essa mesma proteção.
+
+Relatórios abatem o estorno no mês da fatura do crédito, usando a categoria e a
+classificação da compra. Valores líquidos negativos significam crédito; os
+percentuais de categoria usam somente saldos positivos após estornos. A análise
+mensal não soma o pagamento de fatura como outra despesa. O crédito restante,
+após abatimento das compras futuras já cadastradas, entra no patrimônio líquido,
+mas não é dinheiro disponível para transferir às caixinhas.
+
+**Cartões → Parcelas dos próximos meses** reúne faturas a partir do próximo mês,
+com parcelas e pendências após créditos. O mesmo atalho dentro de um cartão
+mostra somente esse cartão. A visão considera registros existentes, sem prever
+novas compras, tarifas, juros ou assinaturas ainda não lançadas.
+
+A V8 foi congelada e a V9 adiciona `CardRefund`. Backups V8 continuam aceitos e
+migram em um banco separado antes da ativação; novos backups incluem estornos.
+Testes verificam pagamentos corrigidos e registrados novamente, créditos
+transportados entre faturas, limites e datas, proteção de faturas pagas, relatórios,
+saldos, restauração V8 e persistência dos estornos em novos backups.
+
+## Aparência e navegação
+
+O app usa aparência escura, fundo quase preto, destaques azuis e componentes
+nativos do SwiftUI. A aba Dashboard passou a se chamar **Início**; sua tela tem
+o título **ProFin**. O backup continua acessível nessa tela. Os atalhos iniciais
+levam ao registro de movimentações, cartões/faturas e gerenciamento de saldos.
+
+O cartão principal mostra o dinheiro nas contas, ainda sem descontar pendências.
+O dinheiro livre permanece identificado separadamente no planejamento. Caixinhas,
+metas e relatórios usam a mesma linguagem visual; os formulários também recebem
+o tema escuro. As cores estão centralizadas em `ProFinStyle`, junto aos pequenos
+componentes visuais compartilhados. Tipografia acompanha o tamanho de texto do
+sistema; informações financeiras usam também títulos, sinais e ícones, não
+apenas cores. Não foram adicionadas fontes, imagens pesadas, dependências ou
+animações contínuas. As listas continuam nativas, com renderização sob demanda.
+A atualização visual não altera a persistência nem as regras financeiras.
+
+## Primeira instalação no iPhone e validação
+
+A instalação nova cria somente dez categorias padrão e uma Conta Principal sem
+saldo informado. Não há dados financeiros de demonstração no app. O banco do
+simulador e os bancos temporários dos testes não são copiados para o iPhone.
+O usuário começa informando seu dinheiro em **Início → Dinheiro nas contas**.
+Reabrir ou atualizar o app preserva os dados já registrados; não existe limpeza
+automática do banco. Uma reinstalação sobre um app existente também pode preservar
+seus dados. Não apague o app para testar sem antes exportar o backup que deseja
+manter.
+
+O projeto agora permite iOS 26 ou superior, compatível com o iPhone 14 conectado
+que executa iOS 26.6.2. Para instalar pelo Xcode, são necessários Modo de
+Desenvolvedor no iPhone, conta/Personal Team configurado no Xcode e assinatura
+válida. Compilar para dispositivo sem assinatura verifica o código, mas não
+significa que o app foi instalado ou validado no telefone.
+
+Nesta revisão foram ajustados o idioma de datas interpoladas, o texto sobre
+parcelas na análise de compra e a dispensa do teclado ao rolar formulários.
+O teste de primeira instalação verifica ausência de lançamentos em todos os
+Models financeiros e preservação de um saldo informado após reabrir o banco.
+Ainda precisam ser confirmados no aparelho real: navegação das cinco abas,
+formulários/teclado, textos ampliados, VoiceOver, exportação/importação pelo app
+Arquivos, uso offline e reabertura. Não use dados pessoais para testes destrutivos;
+backup e restauração podem ser conferidos em uma instalação separada de testes.

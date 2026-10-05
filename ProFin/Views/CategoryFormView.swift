@@ -27,6 +27,7 @@ struct CategoryFormView: View {
                 }
             }
             .navigationTitle("Nova categoria")
+            .proFinScreen()
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {

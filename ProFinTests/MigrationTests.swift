@@ -144,7 +144,7 @@ struct MigrationTests {
         do {
             // Um store somente leitura provoca falha real de gravação sem
             // invalidar previamente os vínculos de outros registros.
-            let schema = Schema(versionedSchema: ProFinSchemaV6.self)
+            let schema = Schema(versionedSchema: ProFinSchemaV9.self)
             let configuration = ModelConfiguration(
                 "ProFin", schema: schema, url: url, allowsSave: false, cloudKitDatabase: .none
             )

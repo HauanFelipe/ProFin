@@ -11,9 +11,9 @@ enum RecurringFrequency: String, Codable {
     case monthly
 }
 
-typealias RecurringExpense = ProFinSchemaV6.RecurringExpense
+typealias RecurringExpense = ProFinSchemaV9.RecurringExpense
 
-extension ProFinSchemaV6 {
+extension ProFinSchemaV9 {
     @Model
     final class RecurringExpense {
         var id: UUID

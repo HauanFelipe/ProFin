@@ -38,6 +38,7 @@ struct RecurringExpenseListView: View {
             }
         }
         .navigationTitle("Gerenciar contas")
+        .proFinScreen()
         .navigationBarTitleDisplayMode(.inline)
         .sheet(item: $selection) { selection in
             if selection.reactivating {
@@ -83,6 +84,7 @@ private struct RecurringReactivationView: View {
                     .font(.footnote).foregroundStyle(.secondary)
             }
             .navigationTitle("Reativar conta")
+            .proFinScreen()
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button("Cancelar") { dismiss() } }

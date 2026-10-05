@@ -22,7 +22,7 @@ enum AppData {
     static let initialAccountID = UUID(uuidString: "2389AC68-4C4D-49FB-8F14-C57A373A8926")!
 
     static func makeContainer(at url: URL? = nil, inMemory: Bool = false) throws -> ModelContainer {
-        let schema = Schema(versionedSchema: ProFinSchemaV6.self)
+        let schema = Schema(versionedSchema: ProFinSchemaV9.self)
         // O banco do ProFin fica separado do banco de exemplo criado pelo Xcode.
         let configuration: ModelConfiguration
         if let url {

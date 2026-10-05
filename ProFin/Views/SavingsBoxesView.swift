@@ -16,7 +16,9 @@ struct SavingsBoxesView: View {
                 Section("Total em caixinhas") {
                     switch Result(catching: { try FinancialSummary.netWorth(accounts: savingsBoxes) }) {
                     case .success(let amount?):
-                        Text(Money.formatted(amount)).font(.title.bold())
+                        ProFinBalanceCard(title: "Você já guardou", value: Money.formatted(amount),
+                            explanation: "Soma das suas caixinhas ativas.", symbol: "archivebox.fill")
+                            .listRowInsets(EdgeInsets()).listRowBackground(Color.clear)
                     case .success(nil):
                         Text("Informe quanto dinheiro há em cada caixinha ativa para calcular o total.")
                             .foregroundStyle(.secondary)
@@ -42,13 +44,16 @@ struct SavingsBoxesView: View {
                     Button("Criar caixinha", systemImage: "plus") { showingNewBox = true }
                 }
                 Section {
-                    Button("Transferir dinheiro", systemImage: "arrow.left.arrow.right") { showingTransfer = true }
+                    Button { showingTransfer = true } label: {
+                        ProFinFeatureLabel(title: "Guardar ou retirar dinheiro", subtitle: "Transfira entre suas contas e caixinhas", symbol: "arrow.left.arrow.right")
+                    }
                     NavigationLink("Gerenciar contas", destination: AccountsView())
                 } footer: {
                     Text("Transferências movimentam seu patrimônio sem alterar receitas ou despesas. Em Gerenciar contas, cadastre a conta corrente e informe quanto dinheiro há em cada conta.")
                 }
             }
             .navigationTitle("Caixinhas")
+            .proFinScreen()
             .sheet(isPresented: $showingNewBox) { AccountFormView(defaultKind: .savingsBox) }
             .sheet(isPresented: $showingTransfer) { TransferFormView() }
         }

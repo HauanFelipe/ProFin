@@ -113,6 +113,7 @@ struct TransactionFormView: View {
                 }
             }
             .navigationTitle("Nova movimentação")
+            .proFinScreen()
             .onChange(of: accounts.map(\.id), initial: true) { _, ids in
                 if accountID == nil, ids.count == 1 { accountID = ids.first }
             }

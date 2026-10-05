@@ -91,6 +91,11 @@ struct RecurringExpensesView: View {
                                             TransactionDetailView(transaction: transaction)
                                         }
                                     }
+                                } else if let cardAmount = charge.cardAmountInCents {
+                                    Text("No cartão: \(Money.formatted(cardAmount)). Consulte as faturas para acompanhar o pagamento.")
+                                    if let purchase = occurrences.first(where: { $0.id == charge.occurrenceID })?.cardPurchase {
+                                        NavigationLink("Ver compra no cartão") { CardPurchaseDetailView(purchaseID: purchase.id) }
+                                    }
                                 } else if let id = charge.occurrenceID {
                                     Button("Registrar pagamento") { payment = PaymentSelection(id: id) }
                                         .buttonStyle(.bordered)
@@ -110,6 +115,7 @@ struct RecurringExpensesView: View {
             }
         }
         .navigationTitle("Contas recorrentes")
+        .proFinScreen()
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
@@ -141,6 +147,7 @@ struct RecurringExpensesView: View {
 
     private func statusIcon(_ charge: RecurringCharge) -> String {
         switch charge.status(asOf: referenceDate) {
+        case .onCard: "creditcard"
         case .paid: "checkmark.circle"
         case .overdue: "exclamationmark.circle"
         case .dueSoon: "clock.badge.exclamationmark"

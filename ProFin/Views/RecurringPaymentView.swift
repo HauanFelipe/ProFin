@@ -23,7 +23,7 @@ struct RecurringPaymentView: View {
         transactions.filter { $0.type == .expense && $0.recurringOccurrence == nil && $0.account != nil }
     }
     private var canSave: Bool {
-        guard let occurrence, occurrence.paymentTransaction == nil else { return false }
+        guard let occurrence, occurrence.paymentTransaction == nil, occurrence.cardPurchase == nil else { return false }
         if linkingExisting { return availableTransactions.contains { $0.id == transactionID } }
         return Money.cents(from: amountText) != nil && accounts.contains { $0.id == accountID && $0.isActive }
     }
@@ -40,7 +40,10 @@ struct RecurringPaymentView: View {
                         LabeledContent("Previsto", value: occurrence.expectedAmountInCents.map(Money.formatted) ?? "Sem estimativa")
                         LabeledContent("Categoria", value: occurrence.category.name)
                     }
-                    if occurrence.paymentTransaction != nil {
+                    if let purchase = occurrence.cardPurchase {
+                        Text("Esta cobrança está registrada no cartão. O valor será considerado nas faturas, sem outra despesa.")
+                        NavigationLink("Ver compra no cartão") { CardPurchaseDetailView(purchaseID: purchase.id) }
+                    } else if occurrence.paymentTransaction != nil {
                         Text("Esta cobrança já foi paga.")
                     } else {
                         Section {
@@ -93,6 +96,7 @@ struct RecurringPaymentView: View {
                 }
             }
             .navigationTitle("Registrar pagamento")
+            .proFinScreen()
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button("Cancelar") { dismiss() } }

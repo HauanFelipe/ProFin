@@ -25,6 +25,7 @@ struct AccountsView: View {
             }
         }
         .navigationTitle("Contas")
+        .proFinScreen()
         .toolbar {
             Button("Nova conta", systemImage: "plus") { showingNewAccount = true }
         }

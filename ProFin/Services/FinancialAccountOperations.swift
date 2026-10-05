@@ -40,17 +40,19 @@ extension FinancialOperationError: LocalizedError {
 extension FinancialOperations {
     @discardableResult
     static func createAccount(name: String, kind: FinancialAccountKind, openingBalanceInCents: Int64,
-                              in context: ModelContext) throws -> FinancialAccount {
+                              isEmergencyReserve: Bool = false, in context: ModelContext) throws -> FinancialAccount {
         let name = name.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !name.isEmpty else { throw FinancialOperationError.emptyTitle }
+        if isEmergencyReserve && kind != .savingsBox { throw GoalOperationError.protectedReserve }
         let account = FinancialAccount(name: name, kind: kind, openingBalanceInCents: openingBalanceInCents)
+        account.isEmergencyReserve = isEmergencyReserve && kind == .savingsBox
         context.insert(account)
         try save(in: context)
         return account
     }
 
     static func updateAccount(_ account: FinancialAccount, name: String, kind: FinancialAccountKind,
-                              openingBalanceInCents: Int64?, in context: ModelContext) throws {
+                              openingBalanceInCents: Int64?, isEmergencyReserve: Bool? = nil, in context: ModelContext) throws {
         guard account.modelContext === context else { throw FinancialOperationError.differentContext }
         let name = name.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !name.isEmpty else { throw FinancialOperationError.emptyTitle }
@@ -61,7 +63,11 @@ extension FinancialOperations {
         if !account.isActive && openingBalanceInCents != account.openingBalanceInCents {
             throw FinancialOperationError.inactiveAccount
         }
+        let protection = isEmergencyReserve ?? account.isEmergencyReserve
+        if protection && kind != .savingsBox { throw GoalOperationError.protectedReserve }
+        if protection { try GoalOperations.requireNoActiveGoal(for: account, in: context) }
         if kind != .savingsBox { try GoalOperations.requireNoActiveGoal(for: account, in: context) }
+        account.isEmergencyReserve = protection
         account.name = name
         account.kind = kind
         account.openingBalanceInCents = openingBalanceInCents
@@ -69,14 +75,14 @@ extension FinancialOperations {
     }
 
     static func updateAccountCurrentBalance(_ account: FinancialAccount, name: String, kind: FinancialAccountKind,
-                                            currentBalanceInCents: Int64?, in context: ModelContext) throws {
+                                            currentBalanceInCents: Int64?, isEmergencyReserve: Bool? = nil, in context: ModelContext) throws {
         let opening: Int64?
         if let currentBalanceInCents {
             opening = try FinancialSummary.openingBalance(forCurrentBalance: currentBalanceInCents, of: account)
         } else {
             opening = account.openingBalanceInCents
         }
-        try updateAccount(account, name: name, kind: kind, openingBalanceInCents: opening, in: context)
+        try updateAccount(account, name: name, kind: kind, openingBalanceInCents: opening, isEmergencyReserve: isEmergencyReserve, in: context)
     }
 
     static func setAccountActive(_ account: FinancialAccount, active: Bool, in context: ModelContext) throws {

@@ -29,9 +29,9 @@ enum ExpenseClassification: String, Codable, CaseIterable, Identifiable {
     }
 }
 
-typealias FinancialTransaction = ProFinSchemaV6.FinancialTransaction
+typealias FinancialTransaction = ProFinSchemaV9.FinancialTransaction
 
-extension ProFinSchemaV6 {
+extension ProFinSchemaV9 {
     @Model
     final class FinancialTransaction {
         @Attribute(.unique) var id: UUID

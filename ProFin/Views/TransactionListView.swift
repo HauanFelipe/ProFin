@@ -15,13 +15,16 @@ struct TransactionListView: View {
         NavigationStack {
             List {
                 Section {
+                    NavigationLink { CreditCardsView() } label: {
+                        ProFinFeatureLabel(title: "Cartões", subtitle: "Compras no crédito e faturas", symbol: "creditcard.fill")
+                    }
                     NavigationLink {
                         RecurringExpensesView()
                     } label: {
-                        Label("Contas recorrentes", systemImage: "calendar.badge.clock")
+                        ProFinFeatureLabel(title: "Contas recorrentes", subtitle: "Despesas que se repetem todo mês", symbol: "calendar.badge.clock")
                     }
                 }
-                Section("Receitas e despesas realizadas") {
+                Section("Entradas e saídas das contas") {
                     if transactions.isEmpty {
                         ContentUnavailableView {
                             Label("Nenhuma movimentação", systemImage: "list.bullet.rectangle")
@@ -43,6 +46,7 @@ struct TransactionListView: View {
                 }
             }
             .navigationTitle("Movimentações")
+            .proFinScreen()
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
                     if !transactions.isEmpty { EditButton() }

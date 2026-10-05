@@ -10,7 +10,7 @@ enum GoalSummary {
     static func progress(for goal: Goal, asOf date: Date = Date()) throws -> GoalProgress {
         guard !goal.isArchived else { return .archived }
         guard let account = goal.savingsAccount else { return .unlinked }
-        guard account.isActive, account.kind == .savingsBox else { return .unavailableAccount }
+        guard account.isActive, !account.isEmergencyReserve, account.kind == .savingsBox else { return .unavailableAccount }
         guard goal.targetAmountInCents > 0 else { throw GoalOperationError.invalidTarget }
         guard let balance = try FinancialSummary.balance(of: account, asOf: date) else { return .unknownBalance }
         // Um saldo negativo não contribui para a meta; excedentes não passam de 100%.

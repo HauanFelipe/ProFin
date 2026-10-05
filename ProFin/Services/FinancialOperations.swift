@@ -88,7 +88,7 @@ enum FinancialOperations {
         date: Date, account: FinancialAccount, notes: String? = nil, in context: ModelContext
     ) throws -> FinancialTransaction {
         guard occurrence.modelContext === context else { throw FinancialOperationError.differentContext }
-        guard occurrence.paymentTransaction == nil else { throw RecurringExpenseError.alreadyPaid }
+        guard occurrence.paymentTransaction == nil, occurrence.cardPurchase == nil else { throw RecurringExpenseError.alreadyPaid }
         let transaction = try insertTransaction(
             title: occurrence.title, amountInCents: amountInCents, date: date,
             category: occurrence.category, type: .expense, account: account,
@@ -106,7 +106,7 @@ enum FinancialOperations {
         guard occurrence.modelContext === context, transaction.modelContext === context else {
             throw FinancialOperationError.differentContext
         }
-        guard occurrence.paymentTransaction == nil else { throw RecurringExpenseError.alreadyPaid }
+        guard occurrence.paymentTransaction == nil, occurrence.cardPurchase == nil else { throw RecurringExpenseError.alreadyPaid }
         guard transaction.type == .expense, transaction.amountInCents > 0,
               transaction.date <= Date(), transaction.account != nil else {
             throw RecurringExpenseError.notAnExpense
@@ -160,7 +160,7 @@ enum FinancialOperations {
     static func deleteAccount(_ account: FinancialAccount, in context: ModelContext) throws {
         guard account.modelContext === context else { throw FinancialOperationError.differentContext }
         try GoalOperations.requireNoActiveGoal(for: account, in: context)
-        guard account.transactions.isEmpty,
+        guard account.cardPayments.isEmpty, account.transactions.isEmpty,
               account.outgoingTransfers.isEmpty,
               account.incomingTransfers.isEmpty else {
             throw FinancialOperationError.accountHasHistory

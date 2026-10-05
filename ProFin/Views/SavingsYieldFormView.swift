@@ -84,6 +84,7 @@ struct SavingsYieldFormView: View {
                 Button("Adicionar aporte", systemImage: "plus") { lots.append(YieldLotDraft(date: referenceDate)) }
             }
             .navigationTitle("Configurar rendimento")
+            .proFinScreen()
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button("Cancelar") { dismiss() } }

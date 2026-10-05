@@ -34,6 +34,11 @@ struct GoalDetailView: View {
                              ? "O vínculo foi preservado como referência. Para reativar, a caixinha precisa estar ativa e livre de outra meta."
                              : "Depósitos e retiradas alteram o progresso. Atingir o valor não registra uma compra e não indica, por si só, que o dinheiro está livre de outros compromissos.")
                     }
+                    if !goal.isArchived {
+                        Section {
+                            NavigationLink("Analisar compra") { PurchaseAnalysisView(goalID: goalID) }
+                        }
+                    }
                     Section {
                         Button(goal.isArchived ? "Reativar meta" : "Arquivar meta") {
                             perform { try GoalOperations.setArchived(goal, archived: !goal.isArchived, in: context) }
@@ -44,6 +49,7 @@ struct GoalDetailView: View {
                     }
                 }
                 .navigationTitle(goal.name)
+                .proFinScreen()
                 .toolbar { Button("Editar") { showingEdit = true } }
             } else {
                 ContentUnavailableView("Meta não encontrada", systemImage: "target")

@@ -3,7 +3,7 @@ import SwiftUI
 struct MainTabView: View {
     var body: some View {
         TabView {
-            Tab("Dashboard", systemImage: "square.grid.2x2") {
+            Tab("Início", systemImage: "house.fill") {
                 DashboardView()
             }
 
@@ -23,5 +23,8 @@ struct MainTabView: View {
                 ReportsView()
             }
         }
+        .toolbarBackground(ProFinStyle.background, for: .tabBar)
+        .toolbarBackground(.visible, for: .tabBar)
+        .toolbarColorScheme(.dark, for: .tabBar)
     }
 }

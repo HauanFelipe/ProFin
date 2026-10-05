@@ -19,9 +19,9 @@ enum FinancialAccountKind: String, CaseIterable, Identifiable {
     }
 }
 
-typealias FinancialAccount = ProFinSchemaV6.FinancialAccount
+typealias FinancialAccount = ProFinSchemaV9.FinancialAccount
 
-extension ProFinSchemaV6 {
+extension ProFinSchemaV9 {
     @Model
     final class FinancialAccount {
         // UUID gerado pelo app. .unique é incompatível com as inversas
@@ -32,6 +32,7 @@ extension ProFinSchemaV6 {
         // Saldo anterior a TODOS os lançamentos da conta. nil significa desconhecido.
         var openingBalanceInCents: Int64?
         var isActive: Bool
+        var isEmergencyReserve: Bool = false
         // nil para contas antigas, cuja data de criação não era registrada.
         var createdAt: Date?
 
@@ -43,6 +44,9 @@ extension ProFinSchemaV6 {
 
         @Relationship(deleteRule: .deny, inverse: \AccountTransfer.destinationAccount)
         var incomingTransfers: [AccountTransfer] = []
+
+        @Relationship(deleteRule: .deny, inverse: \CardInvoicePayment.account)
+        var cardPayments: [CardInvoicePayment] = []
 
         var kind: FinancialAccountKind {
             get { FinancialAccountKind(rawValue: kindRawValue) ?? .other }

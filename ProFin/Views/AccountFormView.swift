@@ -11,6 +11,7 @@ struct AccountFormView: View {
     @State private var name = ""
     @State private var kind = FinancialAccountKind.checking
     @State private var currentBalanceText = "0,00"
+    @State private var isEmergencyReserve = false
     @State private var loaded = false
     @State private var errorMessage: String?
 
@@ -27,6 +28,13 @@ struct AccountFormView: View {
                     TextField("Nome", text: $name)
                     Picker("Tipo", selection: $kind) {
                         ForEach(FinancialAccountKind.allCases) { Text($0.title).tag($0) }
+                    }
+                }
+                if kind == .savingsBox || isEmergencyReserve {
+                    Section {
+                        Toggle("Proteger como reserva de emergência", isOn: $isEmergencyReserve)
+                    } footer: {
+                        Text("Essa caixinha fica fora da análise de compra. Se houver uma meta ativa vinculada, desvincule ou arquive a meta antes de proteger a reserva. Transferências continuam disponíveis.")
                     }
                 }
                 Section {
@@ -46,6 +54,7 @@ struct AccountFormView: View {
                 }
             }
             .navigationTitle(accountID == nil ? "Nova conta" : "Editar conta")
+            .proFinScreen()
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button("Cancelar") { dismiss() } }
@@ -56,6 +65,7 @@ struct AccountFormView: View {
                 if let account {
                     name = account.name
                     kind = account.kind
+                    isEmergencyReserve = account.isEmergencyReserve
                     do {
                         currentBalanceText = try FinancialSummary.balance(of: account).map(Money.input) ?? ""
                     } catch {
@@ -79,10 +89,10 @@ struct AccountFormView: View {
             if accountID != nil {
                 guard let account else { throw FinancialOperationError.differentContext }
                 try FinancialOperations.updateAccountCurrentBalance(account, name: name, kind: kind,
-                    currentBalanceInCents: Money.balanceCents(from: currentBalanceText), in: context)
+                    currentBalanceInCents: Money.balanceCents(from: currentBalanceText), isEmergencyReserve: isEmergencyReserve, in: context)
             } else {
                 guard let opening = Money.balanceCents(from: currentBalanceText) else { throw AccountOperationError.missingOpeningBalance }
-                try FinancialOperations.createAccount(name: name, kind: kind, openingBalanceInCents: opening, in: context)
+                try FinancialOperations.createAccount(name: name, kind: kind, openingBalanceInCents: opening, isEmergencyReserve: isEmergencyReserve, in: context)
             }
             dismiss()
         } catch {

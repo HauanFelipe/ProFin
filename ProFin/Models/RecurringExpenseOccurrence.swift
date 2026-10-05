@@ -1,9 +1,9 @@
 import Foundation
 import SwiftData
 
-typealias RecurringExpenseOccurrence = ProFinSchemaV6.RecurringExpenseOccurrence
+typealias RecurringExpenseOccurrence = ProFinSchemaV9.RecurringExpenseOccurrence
 
-extension ProFinSchemaV6 {
+extension ProFinSchemaV9 {
     @Model
     final class RecurringExpenseOccurrence {
         var id: UUID
@@ -19,6 +19,9 @@ extension ProFinSchemaV6 {
 
         @Relationship(deleteRule: .nullify, inverse: \FinancialTransaction.recurringOccurrence)
         var paymentTransaction: FinancialTransaction?
+
+        @Relationship(deleteRule: .nullify, inverse: \CardPurchase.recurringOccurrence)
+        var cardPurchase: CardPurchase?
 
         init(expense: RecurringExpense, month: Date, dueDate: Date, key: String) {
             self.id = UUID()

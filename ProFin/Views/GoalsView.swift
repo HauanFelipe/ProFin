@@ -8,6 +8,9 @@ struct GoalsView: View {
     var body: some View {
         NavigationStack {
             List {
+                Section {
+                    ProFinIntro(title: "Um passo de cada vez", message: "Escolha seu objetivo e acompanhe o dinheiro guardado para ele.", symbol: "target")
+                }
                 Section("Metas ativas") {
                     if !goals.contains(where: { !$0.isArchived }) {
                         Text("Crie uma meta e vincule uma caixinha para acompanhar seu progresso.")
@@ -16,7 +19,7 @@ struct GoalsView: View {
                     ForEach(goals.filter { !$0.isArchived }) { goal in
                         NavigationLink { GoalDetailView(goalID: goal.id) } label: {
                             VStack(alignment: .leading, spacing: 8) {
-                                Text(goal.name).font(.headline)
+                                Label(goal.name, systemImage: "target").font(.headline).foregroundStyle(ProFinStyle.blue)
                                 Text("Objetivo: \(Money.formatted(goal.targetAmountInCents))").font(.subheadline)
                                 GoalProgressView(goal: goal)
                             }.padding(.vertical, 4)
@@ -37,6 +40,7 @@ struct GoalsView: View {
                 }
             }
             .navigationTitle("Metas")
+            .proFinScreen()
             .toolbar { Button("Nova meta", systemImage: "plus") { showingNewGoal = true } }
             .sheet(isPresented: $showingNewGoal) { GoalFormView() }
         }

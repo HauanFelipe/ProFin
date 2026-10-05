@@ -1,10 +1,10 @@
 import Foundation
 import SwiftData
 
-typealias SavingsYieldConfiguration = ProFinSchemaV6.SavingsYieldConfiguration
-typealias SavingsYieldLot = ProFinSchemaV6.SavingsYieldLot
+typealias SavingsYieldConfiguration = ProFinSchemaV9.SavingsYieldConfiguration
+typealias SavingsYieldLot = ProFinSchemaV9.SavingsYieldLot
 
-extension ProFinSchemaV6 {
+extension ProFinSchemaV9 {
 // Uma posição informada para simulação. Não substitui o histórico financeiro.
 @Model
 final class SavingsYieldConfiguration {

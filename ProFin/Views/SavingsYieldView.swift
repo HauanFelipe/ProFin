@@ -46,6 +46,7 @@ struct SavingsYieldView: View {
             }
         }
         .navigationTitle("Rendimento estimado")
+        .proFinScreen()
         .navigationBarTitleDisplayMode(.inline)
         .sheet(isPresented: $showingEdit) { SavingsYieldFormView(accountID: accountID) }
     }

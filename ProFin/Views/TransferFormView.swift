@@ -4,6 +4,7 @@ import SwiftData
 struct TransferFormView: View {
     var initialSourceID: UUID?
     var initialDestinationID: UUID?
+    var initialAmountInCents: Int64?
     @Environment(\.modelContext) private var context
     @Environment(\.dismiss) private var dismiss
     @Query(filter: #Predicate<FinancialAccount> { $0.isActive }, sort: \FinancialAccount.name)
@@ -56,6 +57,7 @@ struct TransferFormView: View {
                 }
             }
             .navigationTitle("Transferir dinheiro")
+            .proFinScreen()
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button("Cancelar") { dismiss() } }
@@ -68,6 +70,7 @@ struct TransferFormView: View {
                 guard !loaded else { return }
                 sourceID = initialSourceID
                 destinationID = initialDestinationID
+                if let amount = initialAmountInCents { amountText = Money.input(amount) }
                 loaded = true
             }
             .sheet(isPresented: $showingSourceSetup) {

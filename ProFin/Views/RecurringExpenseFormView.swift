@@ -72,6 +72,7 @@ struct RecurringExpenseFormView: View {
                 }
             }
             .navigationTitle(expenseID == nil ? "Nova conta recorrente" : "Editar conta recorrente")
+            .proFinScreen()
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button("Cancelar") { dismiss() } }

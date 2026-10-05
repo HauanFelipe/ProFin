@@ -1,6 +1,7 @@
 import Foundation
 
 enum RecurringStatus: String {
+    case onCard = "No cartão"
     case pending = "Pendente"
     case paid = "Pago"
     case dueSoon = "Vencendo em breve"
@@ -45,9 +46,12 @@ struct RecurringCharge: Identifiable {
     let expectedAmountInCents: Int64?
     let paidAmountInCents: Int64?
 
+    var cardAmountInCents: Int64? = nil
+
     var isProjection: Bool { occurrenceID == nil }
 
     func status(asOf now: Date, calendar: Calendar = .current) -> RecurringStatus {
+        if cardAmountInCents != nil { return .onCard }
         if paidAmountInCents != nil { return .paid }
         let today = calendar.startOfDay(for: now)
         let due = calendar.startOfDay(for: dueDate)
@@ -88,7 +92,8 @@ enum RecurringExpenseSummary {
                 categoryName: occurrence.category.name, referenceMonth: occurrence.referenceMonth,
                 dueDate: occurrence.dueDate, amountType: occurrence.amountType,
                 expectedAmountInCents: occurrence.expectedAmountInCents,
-                paidAmountInCents: occurrence.paymentTransaction?.amountInCents
+                paidAmountInCents: occurrence.paymentTransaction?.amountInCents,
+                cardAmountInCents: occurrence.cardPurchase?.amountInCents
             )
         }
         if month > current {
@@ -122,7 +127,7 @@ enum RecurringExpenseSummary {
         let paid = try FinancialSummary.cents(monthly.reduce(Decimal.zero) {
             $0 + Decimal($1.paidAmountInCents ?? 0)
         })
-        let unpaid = monthly.filter { $0.paidAmountInCents == nil }
+        let unpaid = monthly.filter { $0.paidAmountInCents == nil && $0.cardAmountInCents == nil }
         let pending = try FinancialSummary.cents(unpaid.reduce(Decimal.zero) {
             $0 + Decimal($1.expectedAmountInCents ?? 0)
         })
